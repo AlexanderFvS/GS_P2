@@ -1,6 +1,8 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 
+#include "timestamp.h"
+
 typedef enum
 {
 	PHASE_A = 0x00u,											// Hier werden die Phasen mit einem Enum in der richtigen Reihenfolge benannt.
@@ -17,6 +19,24 @@ typedef enum
 	NO_CHANGE
 } Direction;
 
+extern volatile int currCount; 				// Zählvariable für Encoder-Position
+extern volatile Direction currDir;
+extern volatile uint32_t currTimestamp;
+
+
+
+
+
+/*
+ ****************************************************************************************
+ *  @brief      Initialisiert beide Interrupts
+ *
+ *  @return     void
+ ****************************************************************************************/
+
+void initInterrupts();
+
+
 /*
  ****************************************************************************************
  *  @brief      Liest die aktuelle Phase ein und vergleicht sie mit der letzten Phase.
@@ -25,16 +45,8 @@ typedef enum
  *  @return     int: returnt 0 wenn ok und -1 bei Error State.
  ****************************************************************************************/
 
-int setPhase(int newPhase, int currPhase, Direction* dir);
+void setPhase(void);
 
-/*
- ****************************************************************************************
- *  @brief      Liefert den aktuellen Wert von Count.
- *
- *  @return     int: Count.
- ****************************************************************************************/
-
-int getCount();
 
 /*
  ****************************************************************************************
@@ -44,6 +56,8 @@ int getCount();
  ****************************************************************************************/
 
 void resetCount();
+
+void setCurrPhase ();
 
 
 
