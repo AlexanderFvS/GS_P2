@@ -12,8 +12,7 @@
 
 #define ZEITFENSTER 250.0												// Zeitfenster für Geschwindigkeitsberechnung in Sekunden
 
-Phase currPhase;															// Letzte Phase des Encoders 
-Phase newPhase;
+
 
 int main()
 {
@@ -23,14 +22,15 @@ int main()
 	
 	printLabels();																// Initialisierung
 	initTimeM();
-	int time1 = getTimeM();					
-	int count1 = getCount();
+	int lastTimestamp = getTimeM();					
+	int lastCount = 0;
 	double winkel1;
 	double geschw1;
-	currPhase = readLedF();
-	newPhase = readLedF();
 	int printCount = 0;
-	Direction dir = NO_CHANGE;
+	setCurrPhase();
+	initInterrupts();
+	
+	
 	
 	
 	//____________________________________Superloop____________________________________________//
@@ -40,44 +40,36 @@ int main()
 	{
 		//int a = getTimeM();
 		//GPIOE->BSRR = (0x01U);															// Oszilloskop  D16
-		
-																													// -------Eingabe-------
-		
-		
-		newPhase = readLedF();																// Aktuelle Phase von den GPIOs lesen
-		int time2 = getTimeM();																// Zeitdifferenz berechnen
-		
-		
-		
+		currTimestamp = getTimeM();
 																													// --Error Abfrage--
-		if (setPhase(newPhase, currPhase, &dir))							// Encoder-Status abfragen (gibt -1 zurück bei Fehler somit true)
+		if (currDir == INVALID)																// Encoder-Status abfragen (gibt -1 zurück bei Fehler somit true)
 		{
 			printError();
-			setLedE(dir);
+			setLedE(currDir);
 			while (!readButtonF(6)) {}													// Warte so lange bis S6 gedrückt wird. Dann Reset Error
 			clearError();
 			resetCount();
-			currPhase = newPhase = readLedF();
+			setCurrPhase();
 		}
 		
 		
-		int count2 = getCount();
-		double period = getPeriodM(time1, time2);							// -------Verarbeitung-------
 		
-		if (period > (ZEITFENSTER + 50.0) || (period > ZEITFENSTER && newPhase != currPhase)) {						// Nur berechnen und drucken wenn genug Zeit vergangen ist (ZEITFENSTER)
+		double period = getPeriodM(lastTimestamp, currTimestamp);							// -------Verarbeitung-------
+		
+		if (period > (ZEITFENSTER + 50.0) || (period > ZEITFENSTER && currDir != NO_CHANGE)) {						// Nur berechnen und drucken wenn genug Zeit vergangen ist (ZEITFENSTER)
 			
 			printCount = 0;
 			
 			winkel1 = calcWinkel();
-			geschw1 = calcGeschw(count1, count2, period);
+			geschw1 = calcGeschw(lastCount, currCount, period);
 																													// Werte für nächsten Durchlauf aktualisieren
-			time1 = time2;	
-			count1 = count2;
+			lastTimestamp = currTimestamp;	
+			lastCount = currCount;
 			
 		}
-		if (newPhase != currPhase) {
-			setLedD(count2);																		// ------Ausgabe------
-			setLedE(dir);
+		if (currDir != NO_CHANGE) {
+			setLedD(currCount);																		// ------Ausgabe------
+			setLedE(currDir);
 		}
 		
 		
@@ -89,14 +81,10 @@ int main()
 			}
 			printCount++;
 		}
-		
-		currPhase = newPhase;		
-		
-		
-		
+				
 		//GPIOE->BSRR = (0x01U << 16);													// Oszilloskop
 		//int b = getTimeM();
-		//printf("%f \n", getPeriodM(a,b));
+		printf("Encoder Count: %d\n", currCount);
 		
 		
 		}
