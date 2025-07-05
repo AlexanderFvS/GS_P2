@@ -45,7 +45,7 @@ void setLedE(Direction dir)
 
 int readLedF()
 {
-	return GPIOF->IDR & 0x03u;
+	return GPIOG->IDR & 0x03u;
 }
 
 
